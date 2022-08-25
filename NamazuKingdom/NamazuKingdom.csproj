@@ -15,7 +15,6 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
     <PackageReference Include="NAudio" Version="2.1.0" />
-    <PackageReference Include="Victoria" Version="5.2.8" />
   </ItemGroup>
 
 </Project>

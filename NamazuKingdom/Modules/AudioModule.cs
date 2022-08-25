@@ -38,15 +38,17 @@ namespace NamazuKingdom.Modules
             {
                 var audioClient = await channel.ConnectAsync();
                 _audioService.AudioClient = audioClient;
-                _audioService.AudioOutStream = audioClient.CreatePCMStream(AudioApplication.Mixed);
-                await PlaySilence();
-                //await _audioService.AudioOutStream.FlushAsync();
+                //Adding a smaller buffer seems to fix the issue where when short clips are played
+                //as the first sound it will break the stream. (https://github.com/discord-net/Discord.Net/issues/687)
+                _audioService.AudioOutStream = audioClient.CreatePCMStream(AudioApplication.Mixed, 98304, 200);
             }
             catch(Exception e)
             {
                 Console.WriteLine(e);
             }
         }
+
+        //OUTDATED FIX, HOWEVER WE ARE KEEPING THIS JUST SO WE KNOW HOW TO CREATE AUDIO STREAMS FOR NAUDIO
         //There is some very strange issue where short clips won't play when they are the first clip
         //to be played. So We are now cheating and playing silence as the first stream which should 
         //allow all other clips to be played. 

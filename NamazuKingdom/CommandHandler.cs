@@ -1,4 +1,5 @@
-﻿using Discord.Commands;
+﻿using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -48,9 +49,13 @@ namespace NamazuKingdom
 
             // Create a number to track where the prefix ends and the command begins
             int argPos = 0;
-
+            bool shouldTTS = false;
+            if (!(message.HasCharPrefix('~', ref argPos)) && message.Author.Id == 164948299265081344)
+            {
+                shouldTTS = true;
+            }
             // Determine if the message is a command based on the prefix and make sure no bots trigger commands
-            if (!(message.HasCharPrefix('~', ref argPos) ||
+            else if (!(message.HasCharPrefix('~', ref argPos) ||
                 message.HasMentionPrefix(_client.CurrentUser, ref argPos)) ||
                 message.Author.IsBot)
                 return;
@@ -58,12 +63,47 @@ namespace NamazuKingdom
             // Create a WebSocket-based command context based on the message
             var context = new SocketCommandContext(_client, message);
 
-            // Execute the command with the command context we just
-            // created, along with the service provider for precondition checks.
-            await _commands.ExecuteAsync(
-                context: context,
-                argPos: argPos,
-                services: _serviceProvider);
+            if (!shouldTTS)
+            {
+                // Execute the command with the command context we just
+                // created, along with the service provider for precondition checks.
+                await _commands.ExecuteAsync(
+                    context: context,
+                    argPos: argPos,
+                    services: _serviceProvider);
+            }
+            else
+            {
+                try
+                {
+                    _commands.CommandExecuted += OnCommandExecutedAsync;
+                    await _commands.ExecuteAsync(
+                        context: context,
+                        input: "tts " + context.Message.Content,
+                        services: _serviceProvider);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                }
+            }
+        }
+        private async Task OnCommandExecutedAsync(Optional<CommandInfo> command, ICommandContext context, IResult result)
+        {
+            // We have access to the information of the command executed,
+            // the context of the command, and the result returned from the
+            // execution in this event.
+
+            // We can tell the user what went wrong
+            if (!string.IsNullOrEmpty(result?.ErrorReason))
+            {
+                await context.Channel.SendMessageAsync(result.ErrorReason);
+            }
+
+            // ...or even log the result (the method used should fit into
+            // your existing log handler)
+            var commandName = command.IsSpecified ? command.Value.Name : "A command";
+            Console.WriteLine($"{commandName} was executed at {DateTime.UtcNow}.");
         }
     }
 }

@@ -66,12 +66,6 @@ namespace NamazuKingdom // Note: actual namespace depends on the project name.
             await Task.Delay(Timeout.Infinite);
         }
 
-        private void StartLavalink()
-        {
-            System.Diagnostics.Process proc = new System.Diagnostics.Process();
-            proc.StartInfo.FileName = _configuration["lavalinkFolder"] + "\\run.bat";
-            proc.StartInfo.WorkingDirectory = _configuration["lavalinkFolder"];
-            proc.Start();
-        }
+
     }
 }

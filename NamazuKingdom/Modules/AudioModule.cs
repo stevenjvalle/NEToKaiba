@@ -20,7 +20,6 @@ namespace NamazuKingdom.Modules
     public sealed class AudioModule : ModuleBase<SocketCommandContext>
     {
         private AudioService _audioService;
-        private DiscordSocketClient _client;
 
         public AudioModule(AudioService audioService, DiscordSocketClient client)
         {

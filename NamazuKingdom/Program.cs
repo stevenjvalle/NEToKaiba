@@ -34,8 +34,6 @@ namespace NamazuKingdom // Note: actual namespace depends on the project name.
                 .AddSingleton<DiscordSocketClient>()
                 .AddSingleton<CommandService>()
                 .AddSingleton(config)
-                //.AddSingleton<LavaConfig>()
-                //.AddSingleton<LavaNode>()
                 .AddSingleton<AudioService>();
             return collection.BuildServiceProvider();
         }

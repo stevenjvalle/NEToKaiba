@@ -1,78 +1,73 @@
 ﻿using Discord;
+using Discord.Audio;
 using Discord.Commands;
 using Discord.WebSocket;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VisualBasic;
+using NamazuKingdom.Helpers;
+using NamazuKingdom.Services;
+using NAudio.MediaFoundation;
+using NAudio.Wave;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading.Channels;
 using System.Threading.Tasks;
-using System.Xml.Linq;
-using Victoria;
-using Victoria.Enums;
-using Victoria.Responses.Search;
+using static System.Net.WebRequestMethods;
 
 namespace NamazuKingdom.Modules
 {
-
     public sealed class AudioModule : ModuleBase<SocketCommandContext>
     {
-        private readonly LavaNode _lavaNode;
-        public AudioModule(/*LavaNode node*/)
-        {
-            //_lavaNode = node;
-        }
-        [Command("join")]
-        public async Task JoinAsync()
-        {
-            if (_lavaNode.HasPlayer(Context.Guild))
-            {
-                await ReplyAsync("I'm already connected to a voice channel!");
-                return;
-            }
+        private AudioService _audioService;
+        private DiscordSocketClient _client;
 
-            var voiceState = Context.User as IVoiceState;
-            if (voiceState?.VoiceChannel == null)
-            {
-                await ReplyAsync("You must be connected to a voice channel!");
-                return;
-            }
-
-            try
-            {
-                await _lavaNode.JoinAsync(voiceState.VoiceChannel, Context.Channel as ITextChannel);
-                await ReplyAsync($"Joined {voiceState.VoiceChannel.Name}!");
-            }
-            catch (Exception exception)
-            {
-                await ReplyAsync(exception.Message);
-            }
+        public AudioModule(AudioService audioService, DiscordSocketClient client)
+        {
+            _audioService = audioService;
         }
 
-        [Command("leave")]
-        public async Task LeaveAsync()
+        [Command("join", RunMode = RunMode.Async)]
+        public async Task JoinAsync(IVoiceChannel channel = null)
         {
-            if (!_lavaNode.HasPlayer(Context.Guild))
-            {
-                await ReplyAsync("I'm not connected to a voice channel!");
-                return;
-            }
+            // Get the audio channel
+            channel = channel ?? (Context.User as IGuildUser)?.VoiceChannel;
+            if (channel == null) { await Context.Channel.SendMessageAsync("User must be in a voice channel, or a voice channel must be passed as an argument."); return; }
 
-            var voiceState = Context.User as IVoiceState;
-            if (voiceState?.VoiceChannel == null)
-            {
-                await ReplyAsync("You must be connected to a voice channel!");
-                return;
-            }
-
+            // For the next step with transmitting audio, you would want to pass this Audio Client in to a service.
             try
             {
-                await _lavaNode.LeaveAsync(voiceState.VoiceChannel);
-                await ReplyAsync($"Left {voiceState.VoiceChannel.Name}!");
+                var audioClient = await channel.ConnectAsync();
+                _audioService.AudioClient = audioClient;
+                _audioService.AudioOutStream = audioClient.CreatePCMStream(AudioApplication.Mixed);
+                await PlaySilence();
+                //await _audioService.AudioOutStream.FlushAsync();
             }
-            catch (Exception exception)
+            catch(Exception e)
             {
-                await ReplyAsync(exception.Message);
+                Console.WriteLine(e);
+            }
+        }
+        //There is some very strange issue where short clips won't play when they are the first clip
+        //to be played. So We are now cheating and playing silence as the first stream which should 
+        //allow all other clips to be played. 
+        private async Task PlaySilence()
+        {
+            int bytesPerMillisecond = _audioService.WaveFormat.AverageBytesPerSecond / 1000;
+            //an new all zero byte array will play silence
+            var silentBytes = new byte[1000 * bytesPerMillisecond];
+            MemoryStream stream = new(silentBytes);
+            var reader = new RawSourceWaveStream(stream, _audioService.WaveFormat);
+            using var resamplerDmo = new ResamplerDmoStream(reader, _audioService.WaveFormat);
+            try
+            {
+                await resamplerDmo.CopyToAsync(_audioService.AudioOutStream);
+            }
+            catch (Exception ex) { Console.WriteLine(ex); }
+            finally
+            {
+                await _audioService.AudioOutStream.FlushAsync();
             }
         }
 
@@ -84,7 +79,7 @@ namespace NamazuKingdom.Modules
             var sounds = new DirectoryInfo(soundsFolder).GetFiles().Select(o => o.Name).ToArray();
             var soundListStr = "List of Sounds\n================\n";
             var i = 1;
-            foreach(var sound in sounds)
+            foreach (var sound in sounds)
             {
                 var s = sound.Substring(0, sound.IndexOf('.'));
                 soundListStr += $"{(i++)}: {s}\n";
@@ -92,6 +87,15 @@ namespace NamazuKingdom.Modules
             await Context.Channel.SendMessageAsync(soundListStr);
         }
 
+        [Command("leave")]
+        public async Task LeaveAsync()
+        {
+            if(_audioService.AudioClient != null)
+            {
+                await _audioService.AudioClient.StopAsync();
+                _audioService.AudioClient = null;
+            }
+        }
         [Command("play")]
         public async Task PlayAsync([Remainder][Summary("The sound to play")] string sound)
         {
@@ -100,46 +104,55 @@ namespace NamazuKingdom.Modules
                 await ReplyAsync("Please provide search terms.");
                 return;
             }
-
-            if (!_lavaNode.HasPlayer(Context.Guild))
+            sound = "sounds/" + sound + ".mp3";
+            if(_audioService.AudioClient == null)
             {
-                await ReplyAsync("I'm not connected to a voice channel.");
+                await ReplyAsync("Audio client is null, am I connected to a voice channel?");
                 return;
             }
-
-            if (!sound.Contains("http"))
-                sound = "sounds/" + sound + ".mp3";
-            var searchResponse = await _lavaNode.SearchAsync(SearchType.Direct, sound);
-            if (searchResponse.Status is SearchStatus.LoadFailed or SearchStatus.NoMatches)
-            {
-                await ReplyAsync($"I wasn't able to find anything for `{sound}`.");
-                return;
-            }
-            var player = _lavaNode.GetPlayer(Context.Guild);
-            if (!string.IsNullOrWhiteSpace(searchResponse.Playlist.Name))
-            {
-                player.Queue.Enqueue(searchResponse.Tracks);
-                await ReplyAsync($"Enqueued {searchResponse.Tracks.Count} songs.");
-            }
-            else
-            {
-                var track = searchResponse.Tracks.FirstOrDefault();
-                player.Queue.Enqueue(track);
-
-                await ReplyAsync($"Enqueued {track?.Id}");
-            }
-
-            if (player.PlayerState is PlayerState.Playing or PlayerState.Paused)
-            {
-                return;
-            }
-
-            player.Queue.TryDequeue(out var lavaTrack);
-            await player.PlayAsync(x => {
-                x.Track = lavaTrack;
-                x.ShouldPause = false;
-            });
+            await SendAsync(sound);
         }
-
+        [Command("tts")]
+        public async Task TTSAsync([Remainder][Summary("The sound to play")] string sound)
+        {
+            if (string.IsNullOrWhiteSpace(sound))
+            {
+                await ReplyAsync("Please provide search terms.");
+                return;
+            }
+            if (_audioService.AudioClient == null)
+            {
+                await ReplyAsync("Audio client is null, am I connected to a voice channel?");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(sound))
+                return;
+            if (sound.Contains("https://") || sound.Contains("http://"))
+                return;
+            var url = "https://api.streamelements.com/kappa/v2/speech?voice=Amy&text="+sound;
+            await SendAsync(url);
+        }
+        private async Task SendAsync(string path)
+        {
+            try
+            {
+                using (var reader = new MediaFoundationReader(path))
+                {
+                    using var resamplerDmo = new ResamplerDmoStream(reader, _audioService.WaveFormat);
+                    try
+                    {
+                        await resamplerDmo.CopyToAsync(_audioService.AudioOutStream);
+                    }
+                    catch (Exception ex) { Console.WriteLine(ex); }
+                    finally { 
+                        await _audioService.AudioOutStream.FlushAsync(); 
+                    }   
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+        }
     }
 }

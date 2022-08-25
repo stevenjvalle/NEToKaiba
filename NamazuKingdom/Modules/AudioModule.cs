@@ -3,7 +3,6 @@ using Discord.Audio;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.VisualBasic;
-using NamazuKingdom.Helpers;
 using NamazuKingdom.Services;
 using NAudio.MediaFoundation;
 using NAudio.Wave;

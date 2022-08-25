@@ -18,9 +18,9 @@ namespace NamazuKingdom.Modules
     public sealed class AudioModule : ModuleBase<SocketCommandContext>
     {
         private readonly LavaNode _lavaNode;
-        public AudioModule(LavaNode node)
+        public AudioModule(/*LavaNode node*/)
         {
-            _lavaNode = node;
+            //_lavaNode = node;
         }
         [Command("join")]
         public async Task JoinAsync()

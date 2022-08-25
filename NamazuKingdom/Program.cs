@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using NamazuKingdom.Services;
 using System;
 using Victoria;
 
@@ -33,8 +34,9 @@ namespace NamazuKingdom // Note: actual namespace depends on the project name.
                 .AddSingleton<DiscordSocketClient>()
                 .AddSingleton<CommandService>()
                 .AddSingleton(config)
-                .AddSingleton<LavaConfig>()
-                .AddSingleton<LavaNode>();
+                //.AddSingleton<LavaConfig>()
+                //.AddSingleton<LavaNode>()
+                .AddSingleton<AudioService>();
             return collection.BuildServiceProvider();
         }
 
@@ -58,7 +60,7 @@ namespace NamazuKingdom // Note: actual namespace depends on the project name.
                 await Task.CompletedTask;
                 Console.WriteLine(msg);
             };
-            client.Ready += OnReadyAsync;
+            //client.Ready += OnReadyAsync;
             await client.LoginAsync(TokenType.Bot, _configuration["token"]);
             await client.StartAsync();
 

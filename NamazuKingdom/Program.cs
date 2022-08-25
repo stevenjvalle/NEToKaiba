@@ -5,7 +5,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NamazuKingdom.Services;
 using System;
-using Victoria;
 
 namespace NamazuKingdom // Note: actual namespace depends on the project name.
 {
@@ -73,16 +72,6 @@ namespace NamazuKingdom // Note: actual namespace depends on the project name.
             proc.StartInfo.FileName = _configuration["lavalinkFolder"] + "\\run.bat";
             proc.StartInfo.WorkingDirectory = _configuration["lavalinkFolder"];
             proc.Start();
-        }
-
-        private async Task OnReadyAsync()
-        {
-            var lavaNode = _serviceProvider.GetRequiredService<LavaNode>();
-            if (!lavaNode.IsConnected)
-            {
-                await lavaNode.ConnectAsync();
-                Console.WriteLine(lavaNode.IsConnected);
-            }
         }
     }
 }

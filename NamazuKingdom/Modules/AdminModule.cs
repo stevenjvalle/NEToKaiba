@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
+using Microsoft.EntityFrameworkCore;
 using NamazuKingdom.Models;
 using NamazuKingdom.Services;
 using System;
@@ -52,6 +53,17 @@ namespace NamazuKingdom.Modules
             {
                 Console.WriteLine(ex);
             }
+        }
+        [Command("show_info")]
+        public async Task ShowInfoAsync(IGuildUser user)
+        {
+            var dUser = await _dbContext.DiscordUsers.FirstOrDefaultAsync(u => u.DiscordUserId == user.Id);
+            if (dUser == null)
+            { 
+                await ReplyAsync($"Could not find user with ID {user.Id}, was this user even added?");
+                return;
+            }
+            await ReplyAsync($"Hello {dUser.Nickname}, your birthday will be on {dUser.Birthday.ToString("d")}");
         }
     }
 }

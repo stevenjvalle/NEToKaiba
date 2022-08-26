@@ -1,0 +1,8 @@
+table: 
+  schema: discord
+  name: users
+  columns: 
+    - name: user_id 
+      type: int(10)
+    - namme: user_type
+      type: varchar(8)

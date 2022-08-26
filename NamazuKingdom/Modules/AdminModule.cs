@@ -41,13 +41,15 @@ namespace NamazuKingdom.Modules
             
             settings.DiscordUser = dUser;
             settings.UserRefId = dUser.Id;
-            settings.TTSVoiceName = "Brian";
+            settings.TTSVoiceName = "Amy";
             settings.UseTTS = true;
             settings.ShouldShowBirthday = true;
             try
             {
 
                 await _dbContext.SaveChangesAsync();
+                await ReplyAsync($"Added user {user.Id}");
+                Console.WriteLine($"Added user {user.Id}");
             }
             catch (Exception ex)
             {

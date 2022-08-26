@@ -32,5 +32,17 @@ namespace NamazuKingdom.Models
         [Required]
         [Display(Name = "Show Birthday")]
         public bool ShouldShowBirthday { get; set; } = false;
+        [Required]
+        [Display(Name = "Show Nickname")]
+        public bool ShouldShowNickname { get; set; } = false;
+        [Required]
+        [Display(Name = "Show Pronouns")]
+        public bool ShouldShowPronouns { get; set; } = false;
+        [Required]
+        [Display(Name = "Disable Sounds")]
+        public bool ShouldDisableSounds { get; set; } = false;
+        [Required]
+        [Display(Name = "Sound Volume Level")]
+        public int SoundVolumeLevel { get; set; } = 100;
     }
 }

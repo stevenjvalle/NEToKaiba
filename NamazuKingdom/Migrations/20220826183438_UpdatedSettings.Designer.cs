@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NamazuKingdom.Services;
 
@@ -10,9 +11,10 @@ using NamazuKingdom.Services;
 namespace NamazuKingdom.Migrations
 {
     [DbContext(typeof(NamazuKingdomDbContext))]
-    partial class NamazuKingdomDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220826183438_UpdatedSettings")]
+    partial class UpdatedSettings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.8");

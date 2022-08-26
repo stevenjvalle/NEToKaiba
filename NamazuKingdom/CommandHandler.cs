@@ -1,7 +1,9 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using NamazuKingdom.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,12 +17,14 @@ namespace NamazuKingdom
     {
         private readonly DiscordSocketClient _client;
         private readonly CommandService _commands;
+        private readonly NamazuKingdomDbContext _dbContext;
         private readonly IServiceProvider _serviceProvider;
         // Retrieve client and CommandService instance via ctor
         public CommandHandler(IServiceProvider serviceProvider)
         {
             _client = serviceProvider.GetRequiredService<DiscordSocketClient>();
-            _commands = serviceProvider.GetRequiredService<CommandService>(); ;
+            _commands = serviceProvider.GetRequiredService<CommandService>();
+            _dbContext = serviceProvider.GetRequiredService<NamazuKingdomDbContext>();
             _serviceProvider = serviceProvider;
         }
 
@@ -49,8 +53,12 @@ namespace NamazuKingdom
 
             // Create a number to track where the prefix ends and the command begins
             int argPos = 0;
+
+            // Check to see if the user wants to use TTS without prefix
             bool shouldTTS = false;
-            if (!(message.HasCharPrefix('~', ref argPos)) && message.Author.Id == 164948299265081344)
+            var userWantsTTS = await _dbContext.UserSettings.FirstOrDefaultAsync(u => u.DiscordUser.DiscordUserId == message.Author.Id &&
+            u.UseTTS == true) != null ? true : false;
+            if (!message.HasCharPrefix('~', ref argPos) && userWantsTTS)
             {
                 shouldTTS = true;
             }

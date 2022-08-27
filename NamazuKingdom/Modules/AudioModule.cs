@@ -2,7 +2,9 @@
 using Discord.Audio;
 using Discord.Commands;
 using Discord.WebSocket;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic;
+using NamazuKingdom.Models;
 using NamazuKingdom.Services;
 using NAudio.MediaFoundation;
 using NAudio.Wave;
@@ -20,10 +22,11 @@ namespace NamazuKingdom.Modules
     public sealed class AudioModule : ModuleBase<SocketCommandContext>
     {
         private AudioService _audioService;
-
-        public AudioModule(AudioService audioService, DiscordSocketClient client)
+        private NamazuKingdomDbContext _dbContext;
+        public AudioModule(AudioService audioService, NamazuKingdomDbContext dbContext)
         {
             _audioService = audioService;
+            _dbContext = dbContext;
         }
 
         [Command("join", RunMode = RunMode.Async)]
@@ -42,15 +45,22 @@ namespace NamazuKingdom.Modules
         {
             //todo: add to appsettings
             var soundsFolder = "Lavalink\\sounds";
-            var sounds = new DirectoryInfo(soundsFolder).GetFiles().Select(o => o.Name).ToArray();
-            var soundListStr = "List of Sounds\n================\n";
-            var i = 1;
-            foreach (var sound in sounds)
+            try
             {
-                var s = sound.Substring(0, sound.IndexOf('.'));
-                soundListStr += $"{(i++)}: {s}\n";
+                var sounds = new DirectoryInfo(soundsFolder).GetFiles().Select(o => o.Name).ToArray();
+                var soundListStr = "List of Sounds\n================\n";
+                var i = 1;
+                foreach (var sound in sounds)
+                {
+                    var s = sound.Substring(0, sound.IndexOf('.'));
+                    soundListStr += $"{(i++)}: {s}\n";
+                }
+                await Context.Channel.SendMessageAsync(soundListStr);
             }
-            await Context.Channel.SendMessageAsync(soundListStr);
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
         }
 
         [Command("leave")]
@@ -80,6 +90,14 @@ namespace NamazuKingdom.Modules
         [Command("tts")]
         public async Task TTSAsync([Remainder][Summary("The sound to play")] string sound)
         {
+            //todo null handle
+            if (_dbContext == null) return;
+            if (_dbContext.UserSettings == null) return;
+            if (Context.User == null) return;
+
+            var botVoice = (await _dbContext.UserSettings.FirstOrDefaultAsync(u => u.DiscordUser.DiscordUserId == Context.User.Id))
+                .TTSVoiceName;
+            
             if (string.IsNullOrWhiteSpace(sound))
             {
                 await ReplyAsync("Please provide search terms.");
@@ -94,7 +112,7 @@ namespace NamazuKingdom.Modules
                 return;
             if (sound.Contains("https://") || sound.Contains("http://"))
                 return;
-            var url = "https://api.streamelements.com/kappa/v2/speech?voice=Amy&text="+sound;
+            var url = $"https://api.streamelements.com/kappa/v2/speech?voice={botVoice}&text="+sound;
             await _audioService.SendAsync(url);
         }
 

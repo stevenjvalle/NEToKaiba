@@ -84,7 +84,7 @@ namespace NamazuKingdom
             {
                 try
                 {
-                    _commands.CommandExecuted += OnCommandExecutedAsync;
+                    //_commands.CommandExecuted += OnCommandExecutedAsync;
                     await _commands.ExecuteAsync(
                         context: context,
                         input: "tts " + context.Message.Content,

@@ -32,44 +32,10 @@ namespace NamazuKingdom.Modules
             // Get the audio channel
             channel = channel ?? (Context.User as IGuildUser)?.VoiceChannel;
             if (channel == null) { await Context.Channel.SendMessageAsync("User must be in a voice channel, or a voice channel must be passed as an argument."); return; }
-
-            // For the next step with transmitting audio, you would want to pass this Audio Client in to a service.
-            try
-            {
-                var audioClient = await channel.ConnectAsync();
-                _audioService.AudioClient = audioClient;
-                //Adding a smaller buffer seems to fix the issue where when short clips are played
-                //as the first sound it will break the stream. (https://github.com/discord-net/Discord.Net/issues/687)
-                _audioService.AudioOutStream = audioClient.CreatePCMStream(AudioApplication.Mixed, 98304, 200);
-            }
-            catch(Exception e)
-            {
-                Console.WriteLine(e);
-            }
+            var audioClient = await channel.ConnectAsync();
+            _audioService.CreateAudioService(audioClient);
         }
 
-        //OUTDATED FIX, HOWEVER WE ARE KEEPING THIS JUST SO WE KNOW HOW TO CREATE AUDIO STREAMS FOR NAUDIO
-        //There is some very strange issue where short clips won't play when they are the first clip
-        //to be played. So We are now cheating and playing silence as the first stream which should 
-        //allow all other clips to be played. 
-        private async Task PlaySilence()
-        {
-            int bytesPerMillisecond = _audioService.WaveFormat.AverageBytesPerSecond / 1000;
-            //an new all zero byte array will play silence
-            var silentBytes = new byte[1000 * bytesPerMillisecond];
-            MemoryStream stream = new(silentBytes);
-            var reader = new RawSourceWaveStream(stream, _audioService.WaveFormat);
-            using var resamplerDmo = new ResamplerDmoStream(reader, _audioService.WaveFormat);
-            try
-            {
-                await resamplerDmo.CopyToAsync(_audioService.AudioOutStream);
-            }
-            catch (Exception ex) { Console.WriteLine(ex); }
-            finally
-            {
-                await _audioService.AudioOutStream.FlushAsync();
-            }
-        }
 
         [Command("list_sounds")]
         public async Task ListSoundsAsync()
@@ -90,12 +56,10 @@ namespace NamazuKingdom.Modules
         [Command("leave")]
         public async Task LeaveAsync()
         {
-            if(_audioService.AudioClient != null)
-            {
-                await _audioService.AudioClient.StopAsync();
-                _audioService.AudioClient = null;
-            }
+            await _audioService.DestroyAudioService();
+            await ReplyAsync("Good-bye!");
         }
+
         [Command("play")]
         public async Task PlayAsync([Remainder][Summary("The sound to play")] string sound)
         {
@@ -110,8 +74,9 @@ namespace NamazuKingdom.Modules
                 await ReplyAsync("Audio client is null, am I connected to a voice channel?");
                 return;
             }
-            await SendAsync(sound);
+            await _audioService.SendAsync(sound);
         }
+
         [Command("tts")]
         public async Task TTSAsync([Remainder][Summary("The sound to play")] string sound)
         {
@@ -130,29 +95,8 @@ namespace NamazuKingdom.Modules
             if (sound.Contains("https://") || sound.Contains("http://"))
                 return;
             var url = "https://api.streamelements.com/kappa/v2/speech?voice=Amy&text="+sound;
-            await SendAsync(url);
+            await _audioService.SendAsync(url);
         }
-        private async Task SendAsync(string path)
-        {
-            try
-            {
-                using (var reader = new MediaFoundationReader(path))
-                {
-                    using var resamplerDmo = new ResamplerDmoStream(reader, _audioService.WaveFormat);
-                    try
-                    {
-                        await resamplerDmo.CopyToAsync(_audioService.AudioOutStream);
-                    }
-                    catch (Exception ex) { Console.WriteLine(ex); }
-                    finally { 
-                        await _audioService.AudioOutStream.FlushAsync(); 
-                    }   
-                }
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine(ex);
-            }
-        }
+
     }
 }

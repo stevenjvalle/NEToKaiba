@@ -8,7 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Discord.Net" Version="3.7.2" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="6.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.8" />
@@ -23,6 +22,27 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
     <PackageReference Include="NAudio" Version="2.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Discord.Net-dev\experiment\Discord.Net.BuildOverrides\Discord.Net.BuildOverrides.csproj" />
+    <ProjectReference Include="..\..\Discord.Net-dev\samples\BasicBot\_BasicBot.csproj" />
+    <ProjectReference Include="..\..\Discord.Net-dev\samples\idn\idn.csproj" />
+    <ProjectReference Include="..\..\Discord.Net-dev\samples\InteractionFramework\_InteractionFramework.csproj" />
+    <ProjectReference Include="..\..\Discord.Net-dev\samples\ShardedClient\_ShardedClient.csproj" />
+    <ProjectReference Include="..\..\Discord.Net-dev\samples\TextCommandFramework\_TextCommandFramework.csproj" />
+    <ProjectReference Include="..\..\Discord.Net-dev\samples\WebhookClient\_WebhookClient.csproj" />
+    <ProjectReference Include="..\..\Discord.Net-dev\src\Discord.Net.Analyzers\Discord.Net.Analyzers.csproj" />
+    <ProjectReference Include="..\..\Discord.Net-dev\src\Discord.Net.Commands\Discord.Net.Commands.csproj" />
+    <ProjectReference Include="..\..\Discord.Net-dev\src\Discord.Net.Core\Discord.Net.Core.csproj" />
+    <ProjectReference Include="..\..\Discord.Net-dev\src\Discord.Net.Examples\Discord.Net.Examples.csproj" />
+    <ProjectReference Include="..\..\Discord.Net-dev\src\Discord.Net.Interactions\Discord.Net.Interactions.csproj" />
+    <ProjectReference Include="..\..\Discord.Net-dev\src\Discord.Net.Rest\Discord.Net.Rest.csproj" />
+    <ProjectReference Include="..\..\Discord.Net-dev\src\Discord.Net.Webhook\Discord.Net.Webhook.csproj" />
+    <ProjectReference Include="..\..\Discord.Net-dev\src\Discord.Net.WebSocket\Discord.Net.WebSocket.csproj" />
+    <ProjectReference Include="..\..\Discord.Net-dev\test\Discord.Net.Analyzers.Tests\Discord.Net.Analyzers.Tests.csproj" />
+    <ProjectReference Include="..\..\Discord.Net-dev\test\Discord.Net.Tests.Integration\Discord.Net.Tests.Integration.csproj" />
+    <ProjectReference Include="..\..\Discord.Net-dev\test\Discord.Net.Tests.Unit\Discord.Net.Tests.Unit.csproj" />
   </ItemGroup>
 
 </Project>

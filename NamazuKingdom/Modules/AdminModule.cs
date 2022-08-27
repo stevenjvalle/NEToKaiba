@@ -44,6 +44,10 @@ namespace NamazuKingdom.Modules
             settings.TTSVoiceName = "Amy";
             settings.UseTTS = true;
             settings.ShouldShowBirthday = true;
+            settings.ShouldDisableSounds = false;
+            settings.ShouldShowBirthday = false;
+            settings.ShouldShowNickname = false;
+            settings.ShouldShowPronouns = false;
             try
             {
 

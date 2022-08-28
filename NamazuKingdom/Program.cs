@@ -21,6 +21,7 @@ namespace NamazuKingdom // Note: actual namespace depends on the project name.
                 .AddJsonFile("appsettings.json", optional: true)
                 .Build();
             _serviceProvider = CreateProvider(_configuration);
+            initiateSlashCommands(); 
         }
 
         static void Main(string[] args)
@@ -37,6 +38,11 @@ namespace NamazuKingdom // Note: actual namespace depends on the project name.
                 .AddSingleton<AudioService>()
                 .AddDbContext<NamazuKingdomDbContext>();
             return collection.BuildServiceProvider();
+        }
+
+        void initiateSlashCommands(){
+            var guildId =  _configuration["guildId"]; 
+            
         }
 
         async Task RunAsync(string[] args)

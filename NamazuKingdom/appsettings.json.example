@@ -1,5 +1,6 @@
 {
 	"clientId": "CLIENT_ID",
 	"token": "DISCORD_TOKEN",
+	"guildId": "GUILD_ID",
 	"lavalinkFolder": "C:\\Directory\\To\\LavaLink\\Bin\\Deebug"
 }

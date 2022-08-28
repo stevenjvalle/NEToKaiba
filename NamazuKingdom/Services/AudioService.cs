@@ -36,6 +36,21 @@ namespace NamazuKingdom.Services
             }
         }
 
+        public bool IsConnected()
+        {
+            try
+            {
+                if (AudioClient != null && _audioOutStream.CanWrite)
+                    return true;
+                else return false;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return false;
+            }
+        }
+
         public async Task DestroyAudioService()
         {
             if (AudioClient != null)

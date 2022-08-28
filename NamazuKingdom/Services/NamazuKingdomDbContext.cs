@@ -24,6 +24,7 @@ namespace NamazuKingdom.Services
         public DbSet<UserSettings> UserSettings { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            
             modelBuilder.Entity<DiscordUsers>()
                 .HasOne(a => a.UserSettings)
                 .WithOne(b => b.DiscordUser)

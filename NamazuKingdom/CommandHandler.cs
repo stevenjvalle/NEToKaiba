@@ -58,12 +58,12 @@ namespace NamazuKingdom
             bool shouldTTS = false;
             var userWantsTTS = await _dbContext.UserSettings.FirstOrDefaultAsync(u => u.DiscordUser.DiscordUserId == message.Author.Id &&
             u.UseTTS == true) != null ? true : false;
-            if (!message.HasCharPrefix('~', ref argPos) && userWantsTTS)
+            if (!message.HasCharPrefix('-', ref argPos) && userWantsTTS)
             {
                 shouldTTS = true;
             }
             // Determine if the message is a command based on the prefix and make sure no bots trigger commands
-            else if (!(message.HasCharPrefix('~', ref argPos) ||
+            else if (!(message.HasCharPrefix('-', ref argPos) ||
                 message.HasMentionPrefix(_client.CurrentUser, ref argPos)) ||
                 message.Author.IsBot)
                 return;

@@ -4,6 +4,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic;
+using NamazuKingdom.Helpers;
 using NamazuKingdom.Models;
 using NamazuKingdom.Services;
 using NAudio.MediaFoundation;
@@ -34,9 +35,12 @@ namespace NamazuKingdom.Modules
         {
             // Get the audio channel
             channel = channel ?? (Context.User as IGuildUser)?.VoiceChannel;
+            Console.WriteLine($"Channel: {channel.Id}");
             if (channel == null) { await Context.Channel.SendMessageAsync("User must be in a voice channel, or a voice channel must be passed as an argument."); return; }
             var audioClient = await channel.ConnectAsync();
+            Console.WriteLine($"Audio Client: {audioClient.ConnectionState}");
             _audioService.CreateAudioService(audioClient);
+            Console.WriteLine($"Is connected: {_audioService.IsConnected()}");
         }
 
 
@@ -44,7 +48,7 @@ namespace NamazuKingdom.Modules
         public async Task ListSoundsAsync()
         {
             //todo: add to appsettings
-            var soundsFolder = "Lavalink\\sounds";
+            var soundsFolder = "sounds";
             try
             {
                 var sounds = new DirectoryInfo(soundsFolder).GetFiles().Select(o => o.Name).ToArray();
@@ -112,7 +116,7 @@ namespace NamazuKingdom.Modules
                 return;
             if (sound.Contains("https://") || sound.Contains("http://"))
                 return;
-            var url = $"https://api.streamelements.com/kappa/v2/speech?voice={botVoice}&text="+sound;
+            var url = $"https://api.streamelements.com/kappa/v2/speech?voice={botVoice}&text="+StringHelpers.CleanTTSString(sound);
             await _audioService.SendAsync(url);
         }
 

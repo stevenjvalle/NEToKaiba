@@ -41,8 +41,9 @@ namespace NamazuKingdom // Note: actual namespace depends on the project name.
 
         async Task RunAsync(string[] args)
         {
-            //Uncomment if you want the bat file to be launched within the command prompt 
-            //StartLavalink();
+            //Uncomment to create database
+            //var dbContext = _serviceProvider.GetRequiredService<NamazuKingdomDbContext>();
+            //dbContext.Database.EnsureCreated();
 
             // One of the more flexable ways to access the configuration data is to use the Microsoft's Configuration model,
             // this way we can avoid hard coding the environment secrets. I opted to use the Json and environment variable providers here.

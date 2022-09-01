@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Audio;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
@@ -35,7 +36,8 @@ namespace NamazuKingdom // Note: actual namespace depends on the project name.
                 .AddSingleton<CommandService>()
                 .AddSingleton(config)
                 .AddSingleton<AudioService>()
-                .AddDbContext<NamazuKingdomDbContext>();
+                .AddDbContext<NamazuKingdomDbContext>()
+                .AddSingleton(new List<GuildAudioService>());
             return collection.BuildServiceProvider();
         }
 

@@ -13,22 +13,22 @@ namespace NamazuKingdom.Services
 {
     public class AudioService
     {
-        // We want to keep our audio client alive for as long as the bot is connected to a vc
-        public IAudioClient? AudioClient { get; set; }
-        //We need to keep the AudioOutStream alive because of https://stackoverflow.com/questions/53917665/audio-output-from-memorystream-using-tts-to-discord-bot
-        private AudioOutStream? _audioOutStream { get; set; }
         private readonly WaveFormat _waveFormat = new WaveFormat(48000, 16, 2);
-
-        public void CreateAudioService(IAudioClient client)
+        private readonly List<GuildAudioService> _audioServiceList;
+        public AudioService(List<GuildAudioService> audioServiceList)
         {
-
+            _audioServiceList = audioServiceList;
+        }
+        public void CreateAudioService(IVoiceChannel channel, ulong guildID, IAudioClient client)
+        {
             // For the next step with transmitting audio, you would want to pass this Audio Client in to a service.
             try
             {
-                AudioClient = client;
                 //Adding a smaller buffer seems to fix the issue where when short clips are played
                 //as the first sound it will break the stream. (https://github.com/discord-net/Discord.Net/issues/687)
-                _audioOutStream = client.CreatePCMStream(AudioApplication.Mixed, 48000, 200);
+                var audioOutStream = client.CreatePCMStream(AudioApplication.Mixed, 48000, 200);
+                var guildAudioService = new GuildAudioService(channel, client, audioOutStream, guildID);
+                _audioServiceList.Add(guildAudioService);
             }
             catch (Exception e)
             {
@@ -36,11 +36,18 @@ namespace NamazuKingdom.Services
             }
         }
 
-        public bool IsConnected()
+        public bool IsConnected(ulong guildID)
         {
+            var guildAudioService = _audioServiceList.Where(s => s.GuildID == guildID).First();
+            if(guildAudioService == null)
+            {
+                //TODO
+                Console.WriteLine("Is not connected");
+                return false;
+            }
             try
             {
-                if (AudioClient != null && _audioOutStream.CanWrite)
+                if (guildAudioService.AudioClient != null && guildAudioService.AudioOutStream!.CanWrite)
                     return true;
                 else return false;
             }
@@ -51,13 +58,32 @@ namespace NamazuKingdom.Services
             }
         }
 
-        public async Task DestroyAudioService()
+        public IVoiceChannel? GetCurrentVoiceChannel(ulong guildID)
         {
-            if (AudioClient != null)
+            var guildAudioService = _audioServiceList.Where(s => s.GuildID == guildID).First();
+            if (guildAudioService == null)
             {
-                await AudioClient.StopAsync();
-                _audioOutStream?.Dispose();
-                AudioClient = null;
+                //TODO
+                Console.WriteLine("Is not connected");
+                return null;
+            }
+            return guildAudioService.GuildChannel;
+        }
+
+        public async Task DestroyAudioService(ulong guildID)
+        {
+            var guildAudioService = _audioServiceList.Where(s => s.GuildID == guildID).First();
+            if (guildAudioService == null)
+            {
+                //TODO
+                Console.WriteLine("Is not connected");
+                return;
+            }
+            if (guildAudioService.AudioClient != null)
+            {
+                await guildAudioService.AudioClient.StopAsync();
+                guildAudioService.AudioOutStream?.Dispose();
+                guildAudioService.AudioClient = null;
             }
         }
 
@@ -78,9 +104,16 @@ namespace NamazuKingdom.Services
                 return new ResamplerDmoStream(reader, _waveFormat);
             }
         }
-        public async Task SendAsync(string path)
+        public async Task SendAsync(string path, ulong guildID)
         {
-            if (AudioClient == null || _audioOutStream == null)
+            var guildAudioService = _audioServiceList.Where(s => s.GuildID == guildID).First();
+            if (guildAudioService == null)
+            {
+                //TODO
+                Console.WriteLine("Is not connected");
+                return;
+            }
+            if (guildAudioService.AudioClient == null || guildAudioService.AudioOutStream == null)
             {
                 Console.WriteLine("Client or stream is null");
                 return;
@@ -98,55 +131,13 @@ namespace NamazuKingdom.Services
                 }
                 try
                 {
-                    await resampler.CopyToAsync(_audioOutStream);
+                    await resampler.CopyToAsync(guildAudioService.AudioOutStream);
                 }
                 catch (Exception ex) { Console.WriteLine(ex); }
                 finally
                 {
-                    await _audioOutStream.FlushAsync();
+                    await guildAudioService.AudioOutStream.FlushAsync();
                 }
-                /*using (var reader = new MediaFoundationReader(path))
-                {
-                    using var resamplerDmo = new ResamplerDmoStream(reader, _waveFormat);
-                    try
-                    {
-                        await resamplerDmo.CopyToAsync(_audioOutStream);
-                    }
-                    catch (Exception ex) { Console.WriteLine(ex); }
-                    finally
-                    {
-                        await _audioOutStream.FlushAsync();
-                    }
-                }*/
-                /*ResamplerDmoStream? resamplerDmo = null;
-                if (path.Contains("https://"))
-                {
-                    using (HttpClient client = new HttpClient())
-                    {
-                        var response = await client.GetAsync(path);
-                        var contentStream = await response.Content.ReadAsStreamAsync();
-                        using (var reader = new Mp3FileReader(contentStream))
-                        {
-                            resamplerDmo = new ResamplerDmoStream(reader, _waveFormat);
-                        }
-                    }
-                }
-                else
-                {
-                    using (var reader = new MediaFoundationReader(path))
-                    {
-                        resamplerDmo = new ResamplerDmoStream(reader, _waveFormat);
-                    }
-                }
-                try
-                {
-                    await resamplerDmo.CopyToAsync(_audioOutStream);
-                }
-                catch (Exception ex) { Console.WriteLine(ex); }
-                finally
-                {
-                    await _audioOutStream.FlushAsync();
-                }*/
             }
             catch (Exception ex)
             {
@@ -175,5 +166,19 @@ namespace NamazuKingdom.Services
                 await _audioService.AudioOutStream.FlushAsync();
             }
         }*/
+    }
+    public class GuildAudioService
+    {
+        public IVoiceChannel GuildChannel { get; set; }
+        public IAudioClient? AudioClient { get; set; }
+        public AudioOutStream? AudioOutStream { get; set; }
+        public ulong GuildID { get; set; }
+        public GuildAudioService(IVoiceChannel channel, IAudioClient? audioClient, AudioOutStream? audioOutStream, ulong guildID)
+        {
+            GuildChannel = channel;
+            AudioClient = audioClient;
+            AudioOutStream = audioOutStream;
+            GuildID = guildID;
+        }
     }
 }

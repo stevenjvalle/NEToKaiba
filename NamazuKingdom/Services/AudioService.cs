@@ -84,6 +84,7 @@ namespace NamazuKingdom.Services
                 await guildAudioService.AudioClient.StopAsync();
                 guildAudioService.AudioOutStream?.Dispose();
                 guildAudioService.AudioClient = null;
+                _audioServiceList.Remove(guildAudioService);
             }
         }
 

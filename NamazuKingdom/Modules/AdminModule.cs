@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions; 
 using Microsoft.EntityFrameworkCore;
+using NamazuKingdom.Helpers;
 using NamazuKingdom.Models;
 using NamazuKingdom.Services;
 using System;
@@ -14,56 +15,37 @@ namespace NamazuKingdom.Modules
     [Group("admin", "administrators")]
     public class AdminModule : InteractionModuleBase<SocketInteractionContext>
     {
-        private NamazuKingdomDbContext _dbContext;
-        public AdminModule(NamazuKingdomDbContext dbContext)
+        private readonly DatabaseServices _databaseServices;
+        public AdminModule(DatabaseServices databaseServices)
         {
-            _dbContext = dbContext;
+            _databaseServices = databaseServices;
         }
 
         [SlashCommand("add", "Add user to database.")]
-        public async Task AddAsync(IGuildUser user)
+        public async Task AddAsync(IGuildUser user, string nickname, string pronouns, string birthday, string useTTS, string ttsVoiceName,
+            string showBirthday, string showNickname, string showPronouns, string shouldDisableSounds, string soundLevel)
         {
-            DiscordUsers dUser = new DiscordUsers();
-            UserSettings settings = new UserSettings();
-            try
-            {
-                await _dbContext.DiscordUsers.AddAsync(dUser);
-                await _dbContext.UserSettings.AddAsync(settings);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-            }
-            dUser.DiscordUserId = user.Id;
-            dUser.PreferredPronouns = "They/Them";
-            dUser.Birthday = new DateTime(2000, 01, 01);
-            dUser.UserSettings = settings;
-            
-            settings.DiscordUser = dUser;
-            settings.UserRefId = dUser.Id;
-            settings.TTSVoiceName = "Amy";
-            settings.UseTTS = true;
-            settings.ShouldShowBirthday = true;
-            settings.ShouldDisableSounds = false;
-            settings.ShouldShowBirthday = false;
-            settings.ShouldShowNickname = false;
-            settings.ShouldShowPronouns = false;
-            try
-            {
-
-                await _dbContext.SaveChangesAsync();
-                await ReplyAsync($"Added user {user.Id}");
-                Console.WriteLine($"Added user {user.Id}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-            }
+            DateTime birthdayFormatted = new();
+            DateTime.TryParse(birthday, out birthdayFormatted);
+            bool useTTSFormatted = false;
+            bool.TryParse(useTTS, out useTTSFormatted);
+            bool showBirthdayFormatted = false;
+            bool.TryParse(showBirthday, out showBirthdayFormatted);
+            bool showNicknameFormatted = false;
+            bool.TryParse(showNickname, out showNicknameFormatted);
+            bool showPronounsFormatted = false;
+            bool.TryParse(showPronouns, out showPronounsFormatted);
+            bool shouldDisableSoundsFormatted = true;
+            bool.TryParse(shouldDisableSounds, out shouldDisableSoundsFormatted);
+            int soundLevelFormatted = 100;
+            int.TryParse(soundLevel, out soundLevelFormatted);
+            await _databaseServices.CreateUser(user.Id, nickname, pronouns, birthdayFormatted, useTTSFormatted, ttsVoiceName,
+                showBirthdayFormatted, showNicknameFormatted ,showPronounsFormatted, shouldDisableSoundsFormatted, soundLevelFormatted);
         }
         [SlashCommand("show_info", "Print details on a user from database.")]
         public async Task ShowInfoAsync(IGuildUser user)
         {
-            var dUser = await _dbContext.DiscordUsers.FirstOrDefaultAsync(u => u.DiscordUserId == user.Id);
+            var dUser = await _databaseServices.FindUser(user.Id);
             if (dUser == null)
             { 
                 await ReplyAsync($"Could not find user with ID {user.Id}, was this user even added?");

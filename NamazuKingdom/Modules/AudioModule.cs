@@ -22,12 +22,12 @@ namespace NamazuKingdom.Modules
 {
     public sealed class AudioModule : ModuleBase<SocketCommandContext>
     {
-        private AudioService _audioService;
-        private NamazuKingdomDbContext _dbContext;
-        public AudioModule(AudioService audioService, NamazuKingdomDbContext dbContext)
+        private readonly AudioService _audioService;
+        private readonly DatabaseServices _databaseServices;
+        public AudioModule(AudioService audioService, DatabaseServices dbServices)
         {
             _audioService = audioService;
-            _dbContext = dbContext;
+            _databaseServices = dbServices;
         }
 
         [Command("join", RunMode = RunMode.Async)]
@@ -101,14 +101,9 @@ namespace NamazuKingdom.Modules
         public async Task TTSAsync([Remainder][Summary("The sound to play")] string sound)
         {
             //todo null handle
-            if (_dbContext == null) return;
-            if (_dbContext.UserSettings == null) return;
             if (Context.User == null) return;
 
-            var botVoiceDB = (await _dbContext.UserSettings.FirstOrDefaultAsync(u => u.DiscordUser.DiscordUserId == Context.User.Id));
-            var botVoice = "Brian";
-            if(botVoiceDB != null)
-                botVoice = botVoiceDB.TTSVoiceName;
+            var botVoice = await _databaseServices.UserTTSVoice(Context.User.Id);
 
             if (string.IsNullOrWhiteSpace(sound))
             {

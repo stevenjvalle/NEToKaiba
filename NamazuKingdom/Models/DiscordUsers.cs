@@ -28,7 +28,7 @@ namespace NamazuKingdom.Models
         public DateTime Birthday { get; set; }
 
         [Display(Name = "User Settings")]
-        public UserSettings UserSettings { get; set; }
+        public UserSettings? UserSettings { get; set; }
 
     }
 }

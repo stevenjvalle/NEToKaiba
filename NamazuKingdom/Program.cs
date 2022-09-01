@@ -36,7 +36,7 @@ namespace NamazuKingdom // Note: actual namespace depends on the project name.
                 .AddSingleton<CommandService>()
                 .AddSingleton(config)
                 .AddSingleton<AudioService>()
-                .AddDbContext<NamazuKingdomDbContext>()
+                .AddSingleton<DatabaseServices>()
                 .AddSingleton(new List<GuildAudioService>());
             return collection.BuildServiceProvider();
         }
@@ -44,8 +44,8 @@ namespace NamazuKingdom // Note: actual namespace depends on the project name.
         async Task RunAsync(string[] args)
         {
             //Uncomment to create database
-            //var dbContext = _serviceProvider.GetRequiredService<NamazuKingdomDbContext>();
-            //dbContext.Database.EnsureCreated();
+            //var dbContext = _serviceProvider.GetRequiredService<DatabaseServices>();
+            //dbContext.EnsureCreated();
 
             // One of the more flexable ways to access the configuration data is to use the Microsoft's Configuration model,
             // this way we can avoid hard coding the environment secrets. I opted to use the Json and environment variable providers here.

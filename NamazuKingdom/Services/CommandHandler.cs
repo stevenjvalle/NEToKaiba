@@ -3,7 +3,6 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using NamazuKingdom.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,20 +10,20 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NamazuKingdom
+namespace NamazuKingdom.Services
 {
     public class CommandHandler
     {
         private readonly DiscordSocketClient _client;
         private readonly CommandService _commands;
-        private readonly NamazuKingdomDbContext _dbContext;
         private readonly IServiceProvider _serviceProvider;
+        private readonly DatabaseServices _databaseServices;
         // Retrieve client and CommandService instance via ctor
         public CommandHandler(IServiceProvider serviceProvider)
         {
             _client = serviceProvider.GetRequiredService<DiscordSocketClient>();
             _commands = serviceProvider.GetRequiredService<CommandService>();
-            _dbContext = serviceProvider.GetRequiredService<NamazuKingdomDbContext>();
+            _databaseServices = serviceProvider.GetRequiredService<DatabaseServices>();
             _serviceProvider = serviceProvider;
         }
 
@@ -56,8 +55,7 @@ namespace NamazuKingdom
 
             // Check to see if the user wants to use TTS without prefix
             bool shouldTTS = false;
-            var userWantsTTS = await _dbContext.UserSettings.FirstOrDefaultAsync(u => u.DiscordUser.DiscordUserId == message.Author.Id &&
-            u.UseTTS == true) != null ? true : false;
+            var userWantsTTS = await _databaseServices.UserWantsTTS(message.Author.Id);
             if (!message.HasCharPrefix('-', ref argPos) && userWantsTTS)
             {
                 shouldTTS = true;

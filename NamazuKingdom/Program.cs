@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Discord.Interactions; 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +22,8 @@ namespace NamazuKingdom // Note: actual namespace depends on the project name.
                 .AddJsonFile("appsettings.json", optional: true)
                 .Build();
             _serviceProvider = CreateProvider(_configuration);
+            Console.WriteLine("Configuration:"); 
+            Console.WriteLine(_configuration["token"]); 
         }
 
         static void Main(string[] args)
@@ -35,6 +38,8 @@ namespace NamazuKingdom // Note: actual namespace depends on the project name.
                 .AddSingleton<CommandService>()
                 .AddSingleton(config)
                 .AddSingleton<AudioService>()
+                .AddSingleton<InteractionService>()
+                .AddSingleton<InteractionHandler>()
                 .AddDbContext<NamazuKingdomDbContext>();
             return collection.BuildServiceProvider();
         }
@@ -42,8 +47,8 @@ namespace NamazuKingdom // Note: actual namespace depends on the project name.
         async Task RunAsync(string[] args)
         {
             //Uncomment to create database
-            //var dbContext = _serviceProvider.GetRequiredService<NamazuKingdomDbContext>();
-            //dbContext.Database.EnsureCreated();
+            // var dbContext = _serviceProvider.GetRequiredService<NamazuKingdomDbContext>();
+            // dbContext.Database.EnsureCreated();
 
             // One of the more flexable ways to access the configuration data is to use the Microsoft's Configuration model,
             // this way we can avoid hard coding the environment secrets. I opted to use the Json and environment variable providers here.
@@ -54,13 +59,27 @@ namespace NamazuKingdom // Note: actual namespace depends on the project name.
 
             CommandHandler handler = new(_serviceProvider);
             await handler.InstallCommandsAsync();
+            // Slash Commands 
+            var sCommands = _serviceProvider.GetRequiredService<InteractionService>();
+            await _serviceProvider.GetRequiredService<InteractionHandler>().InitializeAsync(); 
 
             client.Log += async (msg) =>
             {
                 await Task.CompletedTask;
                 Console.WriteLine(msg);
             };
+            sCommands.Log += async (LogMessage msg) =>
+            {
+                Console.WriteLine(msg.Message);
+            };
             //client.Ready += OnReadyAsync;
+            client.Ready += async () =>
+            {
+                Console.WriteLine("Bot ready!");
+                Console.WriteLine(_configuration["guildId"]);
+                Console.WriteLine(UInt64.Parse(_configuration["guildId"])); 
+                await sCommands.RegisterCommandsToGuildAsync(UInt64.Parse(_configuration["guildId"]));
+            };
             await client.LoginAsync(TokenType.Bot, _configuration["token"]);
             await client.StartAsync();
 

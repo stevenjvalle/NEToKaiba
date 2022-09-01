@@ -23,8 +23,6 @@ namespace NamazuKingdom // Note: actual namespace depends on the project name.
                 .AddJsonFile("appsettings.json", optional: true)
                 .Build();
             _serviceProvider = CreateProvider(_configuration);
-            Console.WriteLine("Configuration:"); 
-            Console.WriteLine(_configuration["token"]); 
         }
 
         static void Main(string[] args)
@@ -77,9 +75,6 @@ namespace NamazuKingdom // Note: actual namespace depends on the project name.
             //client.Ready += OnReadyAsync;
             client.Ready += async () =>
             {
-                Console.WriteLine("Bot ready!");
-                Console.WriteLine(_configuration["guildId"]);
-                Console.WriteLine(UInt64.Parse(_configuration["guildId"])); 
                 await sCommands.RegisterCommandsToGuildAsync(UInt64.Parse(_configuration["guildId"]));
             };
             await client.LoginAsync(TokenType.Bot, _configuration["token"]);

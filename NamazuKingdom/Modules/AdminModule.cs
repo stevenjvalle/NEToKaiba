@@ -1,5 +1,5 @@
 ﻿using Discord;
-using Discord.Commands;
+using Discord.Interactions; 
 using Microsoft.EntityFrameworkCore;
 using NamazuKingdom.Models;
 using NamazuKingdom.Services;
@@ -11,8 +11,8 @@ using System.Threading.Tasks;
 
 namespace NamazuKingdom.Modules
 {
-    [Group("admin")]
-    public class AdminModule : ModuleBase<SocketCommandContext>
+    [Group("admin", "administrators")]
+    public class AdminModule : InteractionModuleBase<SocketInteractionContext>
     {
         private NamazuKingdomDbContext _dbContext;
         public AdminModule(NamazuKingdomDbContext dbContext)
@@ -20,7 +20,7 @@ namespace NamazuKingdom.Modules
             _dbContext = dbContext;
         }
 
-        [Command("add")]
+        [SlashCommand("add", "Add user to database.")]
         public async Task AddAsync(IGuildUser user)
         {
             DiscordUsers dUser = new DiscordUsers();
@@ -60,7 +60,7 @@ namespace NamazuKingdom.Modules
                 Console.WriteLine(ex);
             }
         }
-        [Command("show_info")]
+        [SlashCommand("show_info", "Print details on a user from database.")]
         public async Task ShowInfoAsync(IGuildUser user)
         {
             var dUser = await _dbContext.DiscordUsers.FirstOrDefaultAsync(u => u.DiscordUserId == user.Id);

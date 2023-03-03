@@ -47,10 +47,6 @@ namespace NamazuKingdom.Services
         private async Task HandleCommandAsync(SocketMessage messageParam)
         {
             // Don't process the command if it was a system message
-            var checkFlag = 0; 
-            Console.WriteLine("Handle COmmand Async being activated.");
-            Console.WriteLine($"{checkFlag}");
-            checkFlag++; 
             var message = messageParam as SocketUserMessage;
             if (message == null) return;
 
@@ -58,8 +54,6 @@ namespace NamazuKingdom.Services
             int argPos = 0;
 
             // Check to see if the user wants to use TTS without prefix
-            Console.WriteLine(message.Author); 
-            Console.WriteLine(message.Content); 
             bool shouldTTS = false;
             var userWantsTTS = await _databaseServices.UserWantsTTS(message.Author.Id);
             if (!message.HasCharPrefix('-', ref argPos) && userWantsTTS)
@@ -71,9 +65,7 @@ namespace NamazuKingdom.Services
                 message.HasMentionPrefix(_client.CurrentUser, ref argPos)) ||
                 message.Author.IsBot)
                 return;
-            Console.WriteLine(shouldTTS); 
-            Console.WriteLine($"{checkFlag}");
-            checkFlag++;
+
             // Create a WebSocket-based command context based on the message
             var context = new SocketCommandContext(_client, message);
 
@@ -91,9 +83,6 @@ namespace NamazuKingdom.Services
                 try
                 {
                     //_commands.CommandExecuted += OnCommandExecutedAsync;
-                    Console.WriteLine("Execute Command.");
-                    Console.WriteLine(context.Message.Content);
-                    Console.WriteLine(message); 
                     await _commands.ExecuteAsync(
                         context: context,
                         input: "tts " + context.Message.Content,

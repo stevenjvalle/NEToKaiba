@@ -2,7 +2,6 @@
 using Discord.Audio;
 using Discord.Commands;
 using Discord.WebSocket;
-using Discord.Interactions; 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,9 +36,6 @@ namespace NamazuKingdom // Note: actual namespace depends on the project name.
                 .AddSingleton<CommandService>()
                 .AddSingleton(config)
                 .AddSingleton<AudioService>()
-                .AddSingleton<InteractionService>()
-                .AddSingleton<InteractionHandler>()
-                .AddDbContext<NamazuKingdomDbContext>()
                 .AddSingleton<DatabaseServices>()
                 .AddSingleton(new List<GuildAudioService>());
             return collection.BuildServiceProvider();
@@ -48,8 +44,6 @@ namespace NamazuKingdom // Note: actual namespace depends on the project name.
         async Task RunAsync(string[] args)
         {
             //Uncomment to create database
-            // var dbContext = _serviceProvider.GetRequiredService<NamazuKingdomDbContext>();
-            // dbContext.Database.EnsureCreated();
             //var dbContext = _serviceProvider.GetRequiredService<DatabaseServices>();
             //dbContext.EnsureCreated();
 
@@ -62,24 +56,13 @@ namespace NamazuKingdom // Note: actual namespace depends on the project name.
 
             CommandHandler handler = new(_serviceProvider);
             await handler.InstallCommandsAsync();
-            // Slash Commands 
-            var sCommands = _serviceProvider.GetRequiredService<InteractionService>();
-            await _serviceProvider.GetRequiredService<InteractionHandler>().InitializeAsync(); 
 
             client.Log += async (msg) =>
             {
                 await Task.CompletedTask;
                 Console.WriteLine(msg);
             };
-            sCommands.Log += async (LogMessage msg) =>
-            {
-                Console.WriteLine(msg.Message);
-            };
             //client.Ready += OnReadyAsync;
-            client.Ready += async () =>
-            {
-                await sCommands.RegisterCommandsToGuildAsync(UInt64.Parse(_configuration["guildId"]));
-            };
             await client.LoginAsync(TokenType.Bot, _configuration["token"]);
             await client.StartAsync();
 

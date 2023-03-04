@@ -2,7 +2,6 @@
 using Discord.Audio;
 using Discord.Commands;
 using Discord.WebSocket;
-using Discord.Interactions; 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic;
 using NamazuKingdom.Helpers;
@@ -21,7 +20,7 @@ using static System.Net.WebRequestMethods;
 
 namespace NamazuKingdom.Modules
 {
-    public sealed class AudioModule : InteractionModuleBase<SocketInteractionContext>
+    public sealed class AudioModule : ModuleBase<SocketCommandContext>
     {
         private readonly AudioService _audioService;
         private readonly DatabaseServices _databaseServices;
@@ -31,11 +30,10 @@ namespace NamazuKingdom.Modules
             _databaseServices = dbServices;
         }
 
-        [SlashCommand("join", "Have bot join the channel.")]
+        [Command("join", RunMode = RunMode.Async)]
         public async Task JoinAsync(IVoiceChannel channel = null)
         {
             // Get the audio channel
-            Console.WriteLine("Join Set"); 
             channel = channel ?? (Context.User as IGuildUser)?.VoiceChannel;
             if (channel == null) { await Context.Channel.SendMessageAsync("User must be in a voice channel, or a voice channel must be passed as an argument."); return; }
 
@@ -46,7 +44,7 @@ namespace NamazuKingdom.Modules
             Console.WriteLine($"Is connected: {_audioService.IsConnected(channel.GuildId)}");
         }
 
-        [SlashCommand("list_sounds", "List Available Sounds")]
+        [Command("list_sounds")]
         public async Task ListSoundsAsync()
         {
             //todo: add to appsettings
@@ -69,15 +67,15 @@ namespace NamazuKingdom.Modules
             }
         }
 
-        [SlashCommand("leave", "Have bot leave the active channel.")]
+        [Command("leave")]
         public async Task LeaveAsync()
         {
             await _audioService.DestroyAudioService(Context.Guild.Id);
             await ReplyAsync("Good-bye!");
         }
 
-        [SlashCommand("play", "Plays a linked audio cue. ")]
-        public async Task PlayAsync([Remainder] string sound)
+        [Command("play")]
+        public async Task PlayAsync([Remainder][Summary("The sound to play")] string sound)
         {
             if (string.IsNullOrWhiteSpace(sound))
             {
@@ -99,8 +97,8 @@ namespace NamazuKingdom.Modules
             await _audioService.SendAsync(sound, Context.Guild.Id);
         }
 
-        [SlashCommand("tts", "Invoke the Text-To-Speech of a connected bot as a non-subscriber. ")]
-        public async Task TTSAsync([Remainder] string sound)
+        [Command("tts")]
+        public async Task TTSAsync([Remainder][Summary("The sound to play")] string sound)
         {
             //todo null handle
             if (Context.User == null) return;
